@@ -1,5 +1,3 @@
-// +build !relayer
-
 package integration_test
 
 import (
@@ -12,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/starport/starport/pkg/chaintest"
 	"github.com/tendermint/starport/starport/pkg/cmdrunner"
 	"github.com/tendermint/starport/starport/pkg/cmdrunner/step"
 	"github.com/tendermint/starport/starport/pkg/randstr"
@@ -20,9 +19,10 @@ import (
 
 func TestGetTxViaGRPCGateway(t *testing.T) {
 	var (
-		env         = newEnv(t)
+		env         = chaintest.New(t)
 		appname     = randstr.Runes(10)
 		path        = env.Scaffold(appname)
+		homePath    = env.TmpDir()
 		host        = env.RandomizeServerPorts(path, "")
 		ctx, cancel = context.WithCancel(env.Ctx())
 	)
@@ -54,10 +54,11 @@ func TestGetTxViaGRPCGateway(t *testing.T) {
 			"list",
 			"--keyring-backend", "test",
 			"--output", "json",
+			"--home", homePath,
 		),
 		step.PreExec(func() error {
 			output.Reset()
-			return env.IsAppServed(ctx, host)
+			return env.IsAppServed(ctx, host.Host)
 		}),
 		step.PostExec(func(execErr error) error {
 			if execErr != nil {
@@ -96,7 +97,8 @@ func TestGetTxViaGRPCGateway(t *testing.T) {
 					"10token",
 					"--keyring-backend", "test",
 					"--chain-id", appname,
-					"--node", xurl.TCP(host.RPC),
+					"--node", xurl.TCP(host.Host.RPC),
+					"--home", homePath,
 					"--yes",
 				),
 				step.PreExec(func() error {
@@ -115,7 +117,7 @@ func TestGetTxViaGRPCGateway(t *testing.T) {
 						return err
 					}
 
-					addr := fmt.Sprintf("%s/cosmos/tx/v1beta1/txs/%s", xurl.HTTP(host.API), tx.Hash)
+					addr := fmt.Sprintf("%s/cosmos/tx/v1beta1/txs/%s", xurl.HTTP(host.Host.API), tx.Hash)
 					req, err := http.NewRequestWithContext(ctx, http.MethodGet, addr, nil)
 					if err != nil {
 						return errors.Wrap(err, "call to get tx via gRPC gateway")
@@ -145,14 +147,15 @@ func TestGetTxViaGRPCGateway(t *testing.T) {
 	go func() {
 		defer cancel()
 
-		isTxBodyRetrieved = env.Exec("retrieve account addresses", steps, ExecRetry())
+		isTxBodyRetrieved = env.Exec("retrieve account addresses", steps, chaintest.ExecRetry())
 	}()
 
-	env.Must(env.Serve("should serve", path, "", "", ExecCtx(ctx)))
-
-	if !isTxBodyRetrieved {
-		t.FailNow()
-	}
+	env.Must(env.Serve("should serve",
+		path,
+		chaintest.ServeWithHome(homePath),
+		chaintest.ServeWithExecOption(chaintest.ExecCtx(ctx))),
+	)
+	env.Must(isTxBodyRetrieved)
 
 	require.Len(t, txBody.Tx.Body.Messages, 1)
 	require.Len(t, txBody.Tx.Body.Messages[0].Amount, 1)
