@@ -106,6 +106,9 @@ type Client struct {
 
 	// OpenAPI configures OpenAPI spec generation for API.
 	OpenAPI OpenAPI `yaml:"openapi"`
+
+	// Typescript configures code generation for a plain ts API client.
+	Typescript Typescript `yaml:"typescript"`
 }
 
 // Vuex configures code generation for Vuex.
@@ -116,6 +119,11 @@ type Vuex struct {
 
 // OpenAPI configures OpenAPI spec generation for API.
 type OpenAPI struct {
+	Path string `yaml:"path"`
+}
+
+// Typescript configures code generation for a plain ts API client.
+type Typescript struct {
 	Path string `yaml:"path"`
 }
 
