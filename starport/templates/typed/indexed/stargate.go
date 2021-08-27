@@ -3,10 +3,12 @@ package indexed
 import (
 	"embed"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/gobuffalo/genny"
 	"github.com/tendermint/starport/starport/pkg/placeholder"
+	"github.com/tendermint/starport/starport/pkg/protoanalysis"
 	"github.com/tendermint/starport/starport/pkg/xgenny"
 	"github.com/tendermint/starport/starport/templates/module"
 	"github.com/tendermint/starport/starport/templates/typed"
@@ -141,6 +143,18 @@ import "%s/%s.proto";`
 				index.Datatype,
 				index.Name.LowerCamel,
 				i+1,
+			)
+		}
+
+		// Ensure custom types are imported
+		for _, f := range opts.Indexes.CustomImports() {
+			importModule := filepath.Join(opts.ModuleName, f)
+			content = protoanalysis.EnsureProtoImported(
+				content,
+				importModule,
+				path,
+				typed.PlaceholderProtoTxImport,
+				replacer,
 			)
 		}
 
@@ -458,6 +472,19 @@ import "%s/%s.proto";`
 				field.Datatype,
 				field.Name.LowerCamel,
 				i+2+len(opts.Indexes),
+			)
+		}
+
+		// Ensure custom types are imported
+		customFields := append(opts.Fields.CustomImports(), opts.Indexes.CustomImports()...)
+		for _, f := range customFields {
+			importModule := filepath.Join(opts.ModuleName, f)
+			content = protoanalysis.EnsureProtoImported(
+				content,
+				importModule,
+				path,
+				typed.PlaceholderProtoTxImport,
+				replacer,
 			)
 		}
 

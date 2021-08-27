@@ -2,8 +2,9 @@ package cli
 
 import (
     "strconv"
+	<%= if (fields.NeedJSONImport()) { %> "encoding/json" <% } %>
 
-    <%= if (fields.NeedCast()) { %> "github.com/spf13/cast" <% } %>
+    <%= if (fields.NeedCastImport()) { %> "github.com/spf13/cast" <% } %>
 	"github.com/spf13/cobra"
 
     "github.com/cosmos/cosmos-sdk/client"
@@ -17,11 +18,11 @@ var _ = strconv.Itoa(0)
 
 func CmdSend<%= packetName.UpperCamel %>() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "send-<%= packetName.Kebab %> [src-port] [src-channel]<%= for (i, field) in fields { %> [<%= field.Name.Kebab %>]<% } %>",
+		Use:   "send-<%= packetName.Kebab %> [src-port] [src-channel]<%= fields.Args() %>",
 		Short: "Send a <%= packetName.Original %> over IBC",
 		Args:  cobra.ExactArgs(<%= len(fields) + 2 %>),
-		RunE: func(cmd *cobra.Command, args []string) error {
-            <%= for (i, field) in fields { %> arg<%= castArg(field.Name.UpperCamel, field.DatatypeName, field.Datatype, i) %>
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+            <%= for (i, field) in fields { %> <%= castArg("arg", field, i) %>
       		<% } %>
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
