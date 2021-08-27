@@ -6,9 +6,9 @@ parent:
   title: CLI Reference
 ---
 
-# CLI
+# Reference
+
 Documentation for Starport CLI.
-Note: CLI docs reflect the changes in an upcoming release.
 
 ## starport
 
@@ -32,14 +32,163 @@ starport scaffold chain github.com/cosmonaut/mars
 
 **SEE ALSO**
 
+* [starport account](#starport-account)	 - Manage your cosmos chain accounts
 * [starport chain](#starport-chain)	 - Build, initialize and start a blockchain node or perform other actions on the blockchain
 * [starport docs](#starport-docs)	 - Show Starport docs
 * [starport generate](#starport-generate)	 - Generate clients, API docs from source code
 * [starport network](#starport-network)	 - Launch a blockchain network in production
-* [starport relayer](#starport-relayer)	 - Connects blockchains via IBC protocol
+* [starport relayer](#starport-relayer)	 - Connect blockchains by using IBC protocol
 * [starport scaffold](#starport-scaffold)	 - Scaffold a new blockchain, module, message, query, and more
 * [starport tools](#starport-tools)	 - Tools for advanced users
 * [starport version](#starport-version)	 - Print the current build information
+
+
+## starport account
+
+Manage your cosmos chain accounts
+
+**Options**
+
+```
+  -h, --help   help for account
+```
+
+**SEE ALSO**
+
+* [starport](#starport)	 - Starport offers everything you need to scaffold, test, build, and launch your blockchain
+* [starport account create](#starport-account-create)	 - Create a new account
+* [starport account delete](#starport-account-delete)	 - Delete an account
+* [starport account export](#starport-account-export)	 - Export an account
+* [starport account import](#starport-account-import)	 - Import an account
+* [starport account list](#starport-account-list)	 - List accounts
+* [starport account show](#starport-account-show)	 - Show account
+
+
+## starport account create
+
+Create a new account
+
+```
+starport account create [name] [flags]
+```
+
+**Options**
+
+```
+  -h, --help                     help for create
+      --keyring-backend string   Keyring backend to store your account keys (default "test")
+```
+
+**SEE ALSO**
+
+* [starport account](#starport-account)	 - Manage your cosmos chain accounts
+
+
+## starport account delete
+
+Delete an account
+
+```
+starport account delete [name] [flags]
+```
+
+**Options**
+
+```
+  -h, --help                     help for delete
+      --keyring-backend string   Keyring backend to store your account keys (default "test")
+```
+
+**SEE ALSO**
+
+* [starport account](#starport-account)	 - Manage your cosmos chain accounts
+
+
+## starport account export
+
+Export an account
+
+```
+starport account export [name] [flags]
+```
+
+**Options**
+
+```
+  -h, --help                     help for export
+      --keyring-backend string   Keyring backend to store your account keys (default "test")
+      --non-interactive          Do not enter into interactive mode
+      --passphrase string        Account passphrase
+      --path string              path to export private key. default: ./key_[name]
+```
+
+**SEE ALSO**
+
+* [starport account](#starport-account)	 - Manage your cosmos chain accounts
+
+
+## starport account import
+
+Import an account
+
+```
+starport account import [name] [mnemonic or private_key_path] [flags]
+```
+
+**Options**
+
+```
+  -h, --help                     help for import
+      --keyring-backend string   Keyring backend to store your account keys (default "test")
+      --non-interactive          Do not enter into interactive mode
+      --passphrase string        Account passphrase
+```
+
+**SEE ALSO**
+
+* [starport account](#starport-account)	 - Manage your cosmos chain accounts
+
+
+## starport account list
+
+List accounts
+
+```
+starport account list [flags]
+```
+
+**Options**
+
+```
+      --address-prefix string    Account address prefix (default "cosmos")
+  -h, --help                     help for list
+      --keyring-backend string   Keyring backend to store your account keys (default "test")
+```
+
+**SEE ALSO**
+
+* [starport account](#starport-account)	 - Manage your cosmos chain accounts
+
+
+## starport account show
+
+Show account
+
+```
+starport account show [name] [flags]
+```
+
+**Options**
+
+```
+      --address-prefix string    Account address prefix (default "cosmos")
+  -h, --help                     help for show
+      --keyring-backend string   Keyring backend to store your account keys (default "test")
+```
+
+**SEE ALSO**
+
+* [starport account](#starport-account)	 - Manage your cosmos chain accounts
 
 
 ## starport chain
@@ -93,7 +242,7 @@ starport chain build [flags]
   -h, --help                      help for build
       --home string               Home directory used for blockchains
   -p, --path string               path of the app (default ".")
-      --rebuild-proto-once        Enables proto code generation for 3rd party modules. Available only without the --release flag
+      --proto-all-modules         Enables proto code generation for 3rd party modules used in your chain. Available only without the --release flag
       --release                   build for a release
       --release.prefix string     tarball prefix for each release target. Available only with --release flag
   -t, --release.targets strings   release targets. Available only with --release flag
@@ -163,14 +312,14 @@ starport chain serve [flags]
 **Options**
 
 ```
-  -c, --config string        Starport config file (default: ./config.yml)
-  -f, --force-reset          Force reset of the app state on start and every source change
-  -h, --help                 help for serve
-      --home string          Home directory used for blockchains
-  -p, --path string          Path of the app
-      --rebuild-proto-once   Enables proto code generation for 3rd party modules
-  -r, --reset-once           Reset of the app state on first start
-  -v, --verbose              Verbose output
+  -c, --config string       Starport config file (default: ./config.yml)
+  -f, --force-reset         Force reset of the app state on start and every source change
+  -h, --help                help for serve
+      --home string         Home directory used for blockchains
+  -p, --path string         Path of the app
+      --proto-all-modules   Enables proto code generation for 3rd party modules used in your chain
+  -r, --reset-once          Reset of the app state on first start
+  -v, --verbose             Verbose output
 ```
 
 **SEE ALSO**
@@ -218,9 +367,29 @@ Produced source code can be regenerated by running a command again and is not me
 **SEE ALSO**
 
 * [starport](#starport)	 - Starport offers everything you need to scaffold, test, build, and launch your blockchain
+* [starport generate dart](#starport-generate-dart)	 - Generate a Dart client
 * [starport generate openapi](#starport-generate-openapi)	 - Generate generates an OpenAPI spec for your chain from your config.yml
 * [starport generate proto-go](#starport-generate-proto-go)	 - Generate proto based Go code needed for the app's source code
 * [starport generate vuex](#starport-generate-vuex)	 - Generate Vuex store for you chain's frontend from your config.yml
+
+
+## starport generate dart
+
+Generate a Dart client
+
+```
+starport generate dart [flags]
+```
+
+**Options**
+
+```
+  -h, --help   help for dart
+```
+
+**SEE ALSO**
+
+* [starport generate](#starport-generate)	 - Generate clients, API docs from source code
 
 
 ## starport generate openapi
@@ -272,7 +441,8 @@ starport generate vuex [flags]
 **Options**
 
 ```
-  -h, --help   help for vuex
+  -h, --help                help for vuex
+      --proto-all-modules   Enables proto code generation for 3rd party modules used in your chain
 ```
 
 **SEE ALSO**
@@ -837,7 +1007,7 @@ starport network proposal verify [chain-id] [number<,...>] [flags]
 
 ## starport relayer
 
-Connects blockchains via IBC protocol
+Connect blockchains by using IBC protocol
 
 **Options**
 
@@ -884,7 +1054,7 @@ starport relayer configure [flags]
 
 **SEE ALSO**
 
-* [starport relayer](#starport-relayer)	 - Connects blockchains via IBC protocol
+* [starport relayer](#starport-relayer)	 - Connect blockchains by using IBC protocol
 
 
 ## starport relayer connect
@@ -903,7 +1073,7 @@ starport relayer connect [<path>,...] [flags]
 
 **SEE ALSO**
 
-* [starport relayer](#starport-relayer)	 - Connects blockchains via IBC protocol
+* [starport relayer](#starport-relayer)	 - Connect blockchains by using IBC protocol
 
 
 ## starport scaffold
@@ -927,6 +1097,7 @@ CRUD stands for "create, read, update, delete".
 * [starport](#starport)	 - Starport offers everything you need to scaffold, test, build, and launch your blockchain
 * [starport scaffold band](#starport-scaffold-band)	 - Scaffold an IBC BandChain query oracle to request real-time data
 * [starport scaffold chain](#starport-scaffold-chain)	 - Fully-featured Cosmos SDK blockchain
+* [starport scaffold flutter](#starport-scaffold-flutter)	 - A Flutter app for your chain
 * [starport scaffold list](#starport-scaffold-list)	 - CRUD for data stored as an array
 * [starport scaffold map](#starport-scaffold-map)	 - CRUD for data stored as key-value pairs
 * [starport scaffold message](#starport-scaffold-message)	 - Message to perform state transition on the blockchain
@@ -934,6 +1105,7 @@ CRUD stands for "create, read, update, delete".
 * [starport scaffold packet](#starport-scaffold-packet)	 - Message for sending an IBC packet
 * [starport scaffold query](#starport-scaffold-query)	 - Query to get data from the blockchain
 * [starport scaffold single](#starport-scaffold-single)	 - CRUD for data stored in a single location
+* [starport scaffold type](#starport-scaffold-type)	 - Scaffold only a type definition
 * [starport scaffold vue](#starport-scaffold-vue)	 - Vue 3 web app template
 * [starport scaffold wasm](#starport-scaffold-wasm)	 - Import the wasm module to your app
 
@@ -955,6 +1127,7 @@ starport scaffold band [queryName] --module [moduleName] [flags]
 ```
   -h, --help            help for band
       --module string   IBC Module to add the packet into
+      --signer string   Label for the message signer (default: creator)
 ```
 
 **SEE ALSO**
@@ -987,6 +1160,26 @@ starport scaffold chain [github.com/org/repo] [flags]
 * [starport scaffold](#starport-scaffold)	 - Scaffold a new blockchain, module, message, query, and more
 
 
+## starport scaffold flutter
+
+A Flutter app for your chain
+
+```
+starport scaffold flutter [flags]
+```
+
+**Options**
+
+```
+  -h, --help          help for flutter
+  -p, --path string   path to scaffold content of the Flutter app (default "./flutter")
+```
+
+**SEE ALSO**
+
+* [starport scaffold](#starport-scaffold)	 - Scaffold a new blockchain, module, message, query, and more
+
+
 ## starport scaffold list
 
 CRUD for data stored as an array
@@ -1002,6 +1195,7 @@ starport scaffold list NAME [field]... [flags]
       --module string   Module to add into. Default is app's main module
       --no-message      Disable CRUD interaction messages scaffolding
   -p, --path string     path of the app
+      --signer string   Label for the message signer (default: creator)
 ```
 
 **SEE ALSO**
@@ -1021,9 +1215,11 @@ starport scaffold map NAME [field]... [flags]
 
 ```
   -h, --help            help for map
+      --index strings   fields that index the value (default [index])
       --module string   Module to add into. Default is app's main module
       --no-message      Disable CRUD interaction messages scaffolding
   -p, --path string     path of the app
+      --signer string   Label for the message signer (default: creator)
 ```
 
 **SEE ALSO**
@@ -1047,6 +1243,7 @@ starport scaffold message [name] [field1] [field2] ... [flags]
       --module string      Module to add the message into. Default: app's main module
   -p, --path string        path of the app
   -r, --response strings   Response fields
+      --signer string      Label for the message signer (default: creator)
 ```
 
 **SEE ALSO**
@@ -1100,6 +1297,7 @@ starport scaffold packet [packetName] [field1] [field2] ... --module [moduleName
   -h, --help            help for packet
       --module string   IBC Module to add the packet into
       --no-message      Disable send message scaffolding
+      --signer string   Label for the message signer (default: creator)
 ```
 
 **SEE ALSO**
@@ -1146,6 +1344,30 @@ starport scaffold single NAME [field]... [flags]
       --module string   Module to add into. Default is app's main module
       --no-message      Disable CRUD interaction messages scaffolding
   -p, --path string     path of the app
+      --signer string   Label for the message signer (default: creator)
+```
+
+**SEE ALSO**
+
+* [starport scaffold](#starport-scaffold)	 - Scaffold a new blockchain, module, message, query, and more
+
+
+## starport scaffold type
+
+Scaffold only a type definition
+
+```
+starport scaffold type NAME [field]... [flags]
+```
+
+**Options**
+
+```
+  -h, --help            help for type
+      --module string   Module to add into. Default is app's main module
+      --no-message      Disable CRUD interaction messages scaffolding
+  -p, --path string     path of the app
+      --signer string   Label for the message signer (default: creator)
 ```
 
 **SEE ALSO**
@@ -1209,10 +1431,79 @@ Tools for advanced users
 **SEE ALSO**
 
 * [starport](#starport)	 - Starport offers everything you need to scaffold, test, build, and launch your blockchain
+* [starport tools completions](#starport-tools-completions)	 - Generate completions script
 * [starport tools ibc-relayer](#starport-tools-ibc-relayer)	 - Typescript implementation of an IBC relayer
 * [starport tools ibc-setup](#starport-tools-ibc-setup)	 - Collection of commands to quickly setup a relayer
 * [starport tools protoc](#starport-tools-protoc)	 - Execute the protoc command
-* [starport tools completions](#starport-tools-completions)	 - Generates a shell completion script 
+
+
+## starport tools completions
+
+Generate completions script
+
+**Synopsis**
+
+ The completions command outputs a completion script you can use in your shell. The output script requires 
+				that [bash-completion](https://github.com/scop/bash-completion)	is installed and enabled in your 
+				system. Since most Unix-like operating systems come with bash-completion by default, bash-completion 
+				is probably already installed and operational.
+
+Bash:
+
+  $ source <(starport  tools completions bash)
+
+  To load completions for every new session, run:
+
+  ** Linux **
+  $ starport  tools completions bash > /etc/bash_completion.d/starport
+
+  ** macOS **
+  $ starport  tools completions bash > /usr/local/etc/bash_completion.d/starport
+
+Zsh:
+
+  If shell completions is not already enabled in your environment, you will need to enable it.  You can execute the following once:
+
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+  To load completions for each session, execute once:
+  
+  $ starport  tools completions zsh > "${fpath[1]}/_starport"
+
+  You will need to start a new shell for this setup to take effect.
+
+fish:
+
+  $ starport  tools completions fish | source
+
+  To load completions for each session, execute once:
+  
+  $ starport  tools completions fish > ~/.config/fish/completionss/starport.fish
+
+PowerShell:
+
+  PS> starport  tools completions powershell | Out-String | Invoke-Expression
+
+  To load completions for every new session, run:
+  
+  PS> starport  tools completions powershell > starport.ps1
+  
+  and source this file from your PowerShell profile.
+
+
+```
+starport tools completions
+```
+
+**Options**
+
+```
+  -h, --help   help for completions
+```
+
+**SEE ALSO**
+
+* [starport tools](#starport-tools)	 - Tools for advanced users
 
 
 ## starport tools ibc-relayer
