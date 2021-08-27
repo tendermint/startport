@@ -6,8 +6,14 @@ import yaml from "js-yaml";
 
 // cosmosjs related imports.
 import { Bip39, Random } from "@cosmjs/crypto";
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { GasPrice } from "@cosmjs/stargate";
+import { DirectSecp256k1Wallet } from "@cosmjs/proto-signing";
+import { 
+	QueryClient,
+  	setupBankExtension,
+
+	GasPrice,
+} from "@cosmjs/stargate";
+
 import { Tendermint34Client } from "@cosmjs/tendermint-rpc";
 import { stringToPath } from "@cosmjs/crypto";
 import { Coin } from "@cosmjs/stargate";
@@ -36,7 +42,6 @@ const calcGasLimits = (limit: number) => ({
 // ***
 //
 type RelayerConfig = {
-	mnemonic: string;
 	chains?: Array<ChainConfig>;
 	paths?: Array<PathConfig>;
 };
@@ -50,6 +55,7 @@ type PathConfig = {
 
 type ChainConfig = {
 	chainId: string;
+	account: string,
 	rpcAddr: string;
 	addressPrefix: string;
 	gasPrice: string;
@@ -146,146 +152,6 @@ export default class Relayer {
 		this.pollTime = pollTime;
 		this.ensureConfigDirCreated();
 		this.initConfigProxy();
-	}
-
-	public async ensureChainSetup([rpcAddr, { addressPrefix, gasPrice, gasLimit }]: [
-		string,
-		ChainSetupOptions
-	]): Promise<EnsureChainSetupResponse> {
-		try {
-			const tmClient = await Tendermint34Client.connect(rpcAddr);
-			const status = await tmClient.status();
-
-			const chain = {
-				chainId: status.nodeInfo.network,
-				rpcAddr,
-				addressPrefix,
-				gasPrice,
-				gasLimit,
-			};
-
-			if (!this.config.chains) {
-				this.config.chains = [chain];
-				return { id: chain.chainId };
-			}
-
-			const endpointExistsWithDifferentChainID =
-				this.config.chains &&
-				this.config.chains.find(
-					(x) => x.chainId != chain.chainId && x.rpcAddr == chain.rpcAddr
-				);
-
-			const chainExistsWithSameEndpoint =
-				this.config.chains &&
-				this.config.chains.find(
-					(x) => x.chainId == chain.chainId && x.rpcAddr == chain.rpcAddr
-				);
-
-			if (endpointExistsWithDifferentChainID)
-				throw Errors.EndpointExistsWithDifferentChainID;
-
-			if (chainExistsWithSameEndpoint) {
-				Object.assign(
-					this.config.chains.find(
-						(x) => x.chainId == chain.chainId && x.rpcAddr == chain.rpcAddr
-					),
-					chain
-				);
-				return { id: chain.chainId };
-			}
-
-			this.config.chains.push(chain);
-
-			return { id: chain.chainId };
-		} catch (e) {
-			throw Errors.ChainSetupFailed(e);
-		}
-	}
-
-	public createPath([srcID, dstID, options]: [
-		string,
-		string,
-		ConnectOptions
-	]): Path {
-		// determine a unique path name from chain ids with incremental numbers. e.g.:
-		// - src-dst
-		// - src-dst-2
-		let pathName = `${srcID}-${dstID}`;
-		let suffix = "";
-		let i = 2;
-		try {
-			while (this.getPath([pathName + suffix])) {
-				suffix = `-${i}`;
-				i++;
-			}
-		} catch (e) {
-			pathName = pathName + suffix;
-		}
-
-		// construct path object and add to config.
-		try {
-			let path = {
-				id: pathName,
-				isLinked: false,
-				src: {
-					chainID: srcID,
-					portID: options.sourcePort,
-				},
-				dst: {
-					chainID: dstID,
-					portID: options.targetPort,
-				},
-			};
-
-			if (!this.config.paths)
-				this.config.paths = [];
-
-			this.config.paths.push({ path, options });
-
-			return path;
-		} catch (e) {
-			throw Errors.PathSetupFailed(e);
-		}
-	}
-
-	public getPath([id]: [string]): Path {
-		if (this.config.paths) {
-			let path = this.config.paths.find((x) => x.path.id == id);
-			if (path) return path.path;
-		}
-
-		throw Errors.PathNotExists;
-	}
-
-	public listPaths(): Path[] {
-		if (this.config.paths) {
-			let paths = this.config.paths.map((x) => x.path);
-			return paths;
-		}
-
-		throw Errors.PathsNotDefined;
-	}
-
-	public async getDefaultAccount([chainID]: [string]): Promise<Account> {
-		const chain = this.chainById(chainID);
-		if (chain) {
-			let client = await this.getIBCClient(chain);
-			return {
-				address: client.senderAddress,
-			};
-		}
-
-		throw Errors.ChainNotFound(chainID);
-	}
-
-	public async getDefaultAccountBalance([chainID]: [string]): Promise<Coin[]> {
-		const chain = this.chainById(chainID);
-		if (chain) {
-			let client = await this.getIBCClient(chain);
-			return await client.query.bank.allBalances(client.senderAddress);
-		}
-
-		throw Errors.ChainNotFound(chainID);
 	}
 
 	public async link([paths]: [string[]]): Promise<LinkResponse> {
@@ -402,7 +268,6 @@ export default class Relayer {
 
 		// there is no config, create one and return it.
 		let config = {
-			mnemonic: Bip39.encode(Random.getBytes(32)).toString(),
 		};
 
 		this.writeConfig(config);
@@ -431,7 +296,7 @@ export default class Relayer {
 			: null;
 	}
 	private async balanceCheck(chain: ChainConfig): Promise<boolean> {
-		let chainBalances = await this.getDefaultAccountBalance([chain.chainId]);
+		let chainBalances = await this.getAccountBalance([chain.chainId]);
 		let chainGP = GasPrice.fromString(chain.gasPrice);
 		if (!chainBalances.find((x) => x.denom == chainGP.denom)) return false;
 
@@ -529,9 +394,16 @@ export default class Relayer {
 		return link;
 	}
 
+	private async queryClient(rpcAddr: string): Promise<QueryClient> {
+		return QueryClient.withExtensions(
+			await Tendermint34Client.connect(rpcAddr),
+      		setupBankExtension,
+    	);
+	}
+
 	private async getIBCClient(chain: ChainConfig): Promise<IbcClient> {
 		let chainGP = GasPrice.fromString(chain.gasPrice);
-		let signer = await DirectSecp256k1HdWallet.fromMnemonic(
+		let signer = await DirectSecp256k1Wallet.fromKey(
 			this.config.mnemonic,
 			{
 				hdPaths: [stringToPath("m/44'/118'/0'/0/0")],

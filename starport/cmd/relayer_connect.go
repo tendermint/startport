@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tendermint/starport/starport/pkg/clispinner"
-	"github.com/tendermint/starport/starport/pkg/xrelayer"
-	"github.com/tendermint/starport/starport/pkg/xstrings"
+	"github.com/tendermint/starport/starport/pkg/cosmosaccount"
+	"github.com/tendermint/starport/starport/pkg/relayer"
 )
 
 // NewRelayerConnect returns a new relayer connect command to link all or some relayer paths and start
@@ -20,6 +20,9 @@ func NewRelayerConnect() *cobra.Command {
 		Short: "Link chains associated with paths and start relaying tx packets in between",
 		RunE:  relayerConnectHandler,
 	}
+
+	c.Flags().AddFlagSet(flagSetKeyringBackend())
+
 	return c
 }
 
@@ -27,16 +30,30 @@ func relayerConnectHandler(cmd *cobra.Command, args []string) error {
 	s := clispinner.New()
 	defer s.Stop()
 
-	allPaths, err := xrelayer.ListPaths(cmd.Context())
+	var (
+		givenPathIDs = args
+		pathsToUse   []relayer.Path
+		privKeys     = make(map[string]string)
+	)
+
+	allPaths, err := relayer.ListPaths(cmd.Context())
 	if err != nil {
 		return err
 	}
 
-	var (
-		givenPathIDs = args
-		allPathIDs   = xstrings.List(len(allPaths), func(i int) string { return allPaths[i].ID })
-		pathsToUse   = xstrings.AllOrSomeFilter(allPathIDs, givenPathIDs)
-	)
+	if len(givenPathIDs) > 0 {
+		for _, id := range givenPathIDs {
+			for _, path := range allPaths {
+				if id == path.ID {
+					pathsToUse = append(pathsToUse, path)
+					break
+				}
+
+			}
+		}
+	} else {
+		pathsToUse = allPaths
+	}
 
 	if len(pathsToUse) == 0 {
 		s.Stop()
@@ -47,7 +64,33 @@ func relayerConnectHandler(cmd *cobra.Command, args []string) error {
 
 	s.SetText("Linking paths between chains...")
 
-	linkedPaths, alreadyLinkedPaths, failedToLinkPaths, err := xrelayer.Link(cmd.Context(), pathsToUse...)
+	ca, err := cosmosaccount.New(getKeyringBackend(cmd))
+	if err != nil {
+		return err
+	}
+
+	_ = func(name string) error {
+		if _, ok := privKeys[name]; ok {
+			return nil
+		}
+		key, err := ca.Export(name, "")
+		if err != nil {
+			return err
+		}
+		privKeys[name] = key
+		return nil
+	}
+
+	//for _, path := range pathsToUse {
+	//if err := ensureKeyAppended(path.Src.Account); err != nil {
+	//return err
+	//}
+	//if err := ensureKeyAppended(path.Dst.Account); err != nil {
+	//return err
+	//}
+	//}
+
+	linkedPaths, alreadyLinkedPaths, failedToLinkPaths, err := relayer.Link(cmd.Context(), pathsToUse, privKeys)
 	if err != nil {
 		return err
 	}
@@ -95,7 +138,7 @@ func relayerConnectHandler(cmd *cobra.Command, args []string) error {
 	for _, id := range pathsToConnect {
 		s.SetText("Loading...").Start()
 
-		path, err := xrelayer.GetPath(cmd.Context(), id)
+		path, err := relayer.GetPath(cmd.Context(), id)
 		if err != nil {
 			return err
 		}
@@ -112,5 +155,5 @@ func relayerConnectHandler(cmd *cobra.Command, args []string) error {
 
 	printSection("Listening and relaying packets between chains...")
 
-	return xrelayer.Start(cmd.Context(), append(linkedPaths, alreadyLinkedPaths...)...)
+	return relayer.Start(cmd.Context(), append(linkedPaths, alreadyLinkedPaths...)...)
 }

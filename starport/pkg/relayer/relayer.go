@@ -1,4 +1,4 @@
-package xrelayer
+package relayer
 
 import (
 	"context"
@@ -14,13 +14,14 @@ type LinkStatus struct {
 // Link links all chains that has a path to each other.
 // paths are optional and acts as a filter to only link some chains.
 // calling Link multiple times for the same paths does not have any side effects.
-func Link(ctx context.Context, paths ...string) (linkedPaths, alreadyLinkedPaths []string, failedToLinkPaths []LinkStatus, err error) {
+func Link(ctx context.Context, paths []Path, privKeys map[string]string) (
+	linkedPaths, alreadyLinkedPaths []string, failedToLinkPaths []LinkStatus, err error) {
 	var reply struct {
 		LinkedPaths        []string     `json:"linkedPaths"`
 		AlreadyLinkedPaths []string     `json:"alreadyLinkedPaths"`
 		FailedToLinkPaths  []LinkStatus `json:"failedToLinkPaths"`
 	}
-	err = tsrelayer.Call(ctx, "link", []interface{}{paths}, &reply)
+	err = tsrelayer.Call(ctx, "link", []interface{}{paths, privKeys}, &reply)
 	linkedPaths = reply.LinkedPaths
 	alreadyLinkedPaths = reply.AlreadyLinkedPaths
 	failedToLinkPaths = reply.FailedToLinkPaths
