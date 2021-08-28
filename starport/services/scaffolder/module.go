@@ -123,6 +123,7 @@ func (s *Scaffolder) CreateModule(
 		ModuleName:   moduleName,
 		ModulePath:   path.RawPath,
 		AppName:      path.Package,
+		AppPath:      s.path,
 		OwnerName:    owner(path.RawPath),
 		IsIBC:        creationOpts.ibc,
 		IBCOrdering:  creationOpts.ibcChannelOrdering,
@@ -157,15 +158,7 @@ func (s *Scaffolder) CreateModule(
 		return sm, runErr
 	}
 
-	// Generate proto and format the source
-	pwd, err := os.Getwd()
-	if err != nil {
-		return sm, err
-	}
-	if err := s.finish(pwd, path.RawPath); err != nil {
-		return sm, err
-	}
-	return sm, runErr
+	return sm, s.finish(opts.AppPath, path.Root)
 }
 
 // ImportModule imports specified module with name to the scaffolded app.
@@ -214,11 +207,7 @@ func (s *Scaffolder) ImportModule(tracer *placeholder.Tracer, name string) (sm x
 		return sm, err
 	}
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		return sm, err
-	}
-	return sm, s.finish(pwd, path.RawPath)
+	return sm, s.finish(s.path, path.RawPath)
 }
 
 func moduleExists(appPath string, moduleName string) (bool, error) {

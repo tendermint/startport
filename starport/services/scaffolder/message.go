@@ -2,7 +2,6 @@ package scaffolder
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/gobuffalo/genny"
 	"github.com/tendermint/starport/starport/pkg/field"
@@ -103,6 +102,7 @@ func (s *Scaffolder) AddMessage(
 		g    *genny.Generator
 		opts = &message.Options{
 			AppName:    path.Package,
+			AppPath:    s.path,
 			ModulePath: path.RawPath,
 			ModuleName: moduleName,
 			OwnerName:  owner(path.RawPath),
@@ -124,6 +124,7 @@ func (s *Scaffolder) AddMessage(
 			ModuleName: opts.ModuleName,
 			ModulePath: opts.ModulePath,
 			AppName:    opts.AppName,
+			AppPath:    opts.AppPath,
 			OwnerName:  opts.OwnerName,
 		},
 	)
@@ -141,11 +142,7 @@ func (s *Scaffolder) AddMessage(
 	if err != nil {
 		return sm, err
 	}
-	pwd, err := os.Getwd()
-	if err != nil {
-		return sm, err
-	}
-	return sm, s.finish(pwd, path.RawPath)
+	return sm, s.finish(opts.AppPath, path.Root)
 }
 
 // checkForbiddenMessageField returns true if the name is forbidden as a message name

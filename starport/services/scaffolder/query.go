@@ -1,8 +1,6 @@
 package scaffolder
 
 import (
-	"os"
-
 	"github.com/gobuffalo/genny"
 	"github.com/tendermint/starport/starport/pkg/field"
 	"github.com/tendermint/starport/starport/pkg/gomodulepath"
@@ -60,6 +58,7 @@ func (s *Scaffolder) AddQuery(
 		g    *genny.Generator
 		opts = &query.Options{
 			AppName:     path.Package,
+			AppPath:     s.path,
 			ModulePath:  path.RawPath,
 			ModuleName:  moduleName,
 			OwnerName:   owner(path.RawPath),
@@ -80,9 +79,5 @@ func (s *Scaffolder) AddQuery(
 	if err != nil {
 		return sm, err
 	}
-	pwd, err := os.Getwd()
-	if err != nil {
-		return sm, err
-	}
-	return sm, s.finish(pwd, path.RawPath)
+	return sm, s.finish(opts.AppPath, path.Root)
 }
